@@ -2,8 +2,8 @@
 
 ## 项目定位
 
-本目录是双臂协同搬运项目的 Git 协作根目录。`ros1_ws` 是 **Ubuntu 20.04 / ROS1 Noetic RM65-B 执行工作空间**，未来的 `ros2_ws` 是 **Ubuntu 22.04 / ROS2 Humble ECO65 协调工作空间**；两者分别构建，绝不互相 overlay。
-当前工作重点是把 RM65 本机状态、相机和任务执行安全地封装为网关；ROS2 不直接操作 RM65 的 ROS1 话题或 Action。
+本目录是双臂协同搬运项目的 Git 协作根目录。`ros1_ws` 是 **Ubuntu 20.04 / ROS1 Noetic RM65-B 执行工作空间**，`ros2_ws` 是 **Ubuntu 22.04 / ROS2 Humble ECO65 协调工作空间**；两者分别构建，绝不互相 overlay。
+当前工作重点是以只读方式验证 RM65 网关与 ROS2 协调器之间的双机通信；ROS2 不直接操作 RM65 的 ROS1 话题或 Action。
 
 完整方案见 [DUAL_ARM_LIFT_PLAN.md](docs/DUAL_ARM_LIFT_PLAN.md)，实施历史见
 [PROJECT_LOG.md](docs/PROJECT_LOG.md)，现场只读验收步骤见
@@ -34,6 +34,10 @@
 - `guarded_real`：校验未来轨迹档案并复用只读健康状态；固定禁用执行，所有执行命令返回 `REAL_EXECUTION_DISABLED`。
 
 **已完成现场基线**：Ubuntu 20.04 上的 `read_only` 验收已通过。RM65 六轴关节状态、`/rm_65/follow_joint_trajectory` Action server 与 `/camera` 的四路相机/标定数据均为健康状态；网关保持 `READ_ONLY`，不具备运动或夹爪权限。具体数值和证据见项目记录的“RM65 只读网关现场验收通过”条目。
+
+**已完成 ROS2 最小客户端**：`ros2_ws/src/dual_arm_lift_coordinator` 提供 `rm65_health_client` 节点和仅含 `HEALTH` 的 TCP 客户端。节点周期发布 `rm65/health`、`rm65/connection_status`、`rm65/recent_success_time` 和 `rm65/recent_error`，每次轮询使用短连接，因此可在下一个周期自动重连。测试已接入 `colcon test` 并通过 5 项本地回环测试。该包没有执行类命令构造或调用接口；它只是双机只读联调的基础，不是完整的双臂任务协调器。
+
+**虚拟机只读联调支持已实现**：ROS1 网关新增仅适用于 `read_only` 模式的来源 IP 白名单远程监听。当前 VMware 验收固定为宿主机 `172.16.108.1` 访问虚拟机 `172.16.108.128:28400`；远程启动必须使用未跟踪的随机 token 配置，示例 token 会被拒绝。UFW 当前不活动，本阶段不启用；完整步骤见 [ROS2_ROS1_VM_HEALTH_VALIDATION_ZH.md](docs/ROS2_ROS1_VM_HEALTH_VALIDATION_ZH.md)。
 
 只读网关现已提供默认 `600 s` 的 `health.observability` 滚动基线：关节/相机消息频率和间隔、Action server 可用性变化及驱动错误码非零记录均只读输出，不写入磁盘且不改变健康阈值。现场连续 10 分钟观测已通过：关节约 `49.02 Hz`、四路相机各约 `29.96 Hz`，Action server 无可用性变化，错误码无非零记录；步骤、判据与限制见只读验证手册。
 
@@ -69,8 +73,9 @@ RM65 驱动源码已确认仅在解析到含 `arm_err`、`sys_err` 的 UDP 状�
 
 ## 后续路线
 
-1. 在 Ubuntu 22.04 创建最小 ROS2 TCP 客户端，并在明确授权后将 RM65 网关仅绑定到指定局域网 IP；保持只读或固定禁用执行，仅验证 `HEALTH`、认证、心跳、断网重连、重复请求和双方 `chrony` 时间状态。
-2. 以方框角上的 ArUco 为输入，完成相机外参、`aruco -> box` 和两端 `box -> grasp` 变换；在各自本机 MoveIt 中先验证预抓取与抓取接近的规划和无夹持到位。抬升阶段仍使用经示教和离线验证的本机轨迹，不使用在线规划生成载荷轨迹。
-3. 在可靠夹持反馈、已验证抬升轨迹、轨迹末端误差确认、载荷参数、现场急停与用户明确授权齐备后，设计真实 ROS 控制适配器和本机安全中止，并按空夹具、轻质假件、真实方框的顺序进行双臂测试。
+1. 按虚拟机只读联调手册完成 10 分钟 `HEALTH`、认证失败、断网重连和来源白名单现场验收；UFW 保持不活动。
+2. 实体机部署前，单独确认同一业务网、固定地址、既有防火墙规则和 RM65 专用网口边界，不能直接修改 `ens37` 或启用 UFW。
+3. 以方框角上的 ArUco 为输入，完成相机外参、`aruco -> box` 和两端 `box -> grasp` 变换；在各自本机 MoveIt 中先验证预抓取与抓取接近的规划和无夹持到位。抬升阶段仍使用经示教和离线验证的本机轨迹，不使用在线规划生成载荷轨迹。
+4. 在可靠夹持反馈、已验证抬升轨迹、轨迹末端误差确认、载荷参数、现场急停与用户明确授权齐备后，设计真实 ROS 控制适配器和本机安全中止，并按空夹具、轻质假件、真实方框的顺序进行双臂测试。
 
 任何真实举升均依赖：急停与人工监护、夹持成功反馈、相机/ArUco 标定、已验证轨迹、载荷参数、时间同步与 ECO65 力控参数全部就绪。

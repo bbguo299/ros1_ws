@@ -1,0 +1,10 @@
+# 此文件覆盖 read_only.yaml 的网络参数；复制为未跟踪的
+# read_only_allowlisted.local.yaml 后填写当前虚拟机和宿主机地址及随机 token。
+# 只读模式仍永久禁止运动和夹爪命令。
+mode: read_only
+real_hardware_enabled: false
+execution_enabled: false
+bind_address: 172.16.108.128
+allowed_client_ips: [172.16.108.1]
+tcp_port: 28400
+auth_token: CHANGE_ME

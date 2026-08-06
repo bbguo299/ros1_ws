@@ -23,7 +23,7 @@ class Rm65HealthNode(Node):
     def __init__(self) -> None:
         super().__init__('rm65_health_client')
         self.declare_parameter('rm65_host', '127.0.0.1')
-        self.declare_parameter('tcp_port', 5000)
+        self.declare_parameter('tcp_port', 28400)
         self.declare_parameter('auth_token', 'CHANGE_ME')
         self.declare_parameter('connect_timeout_s', 2.0)
         self.declare_parameter('health_period_s', 5.0)

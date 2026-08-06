@@ -127,6 +127,10 @@ class GatewayDispatcher(object):
 
 class _GatewayRequestHandler(socketserver.StreamRequestHandler):
     def handle(self):
+        if not self.server.client_is_allowed(self.client_address[0]):
+            self._write(self.server.dispatcher._response(
+                None, False, "CLIENT_IP_NOT_ALLOWED", "client IP is not allowlisted"))
+            return
         while True:
             raw = self.rfile.readline(self.server.maximum_message_bytes + 1)
             if not raw:
@@ -153,16 +157,21 @@ class _ThreadedGatewayServer(socketserver.ThreadingTCPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-    def __init__(self, address, dispatcher, maximum_message_bytes):
+    def __init__(self, address, dispatcher, maximum_message_bytes, allowed_client_ips=None):
         self.dispatcher = dispatcher
         self.maximum_message_bytes = int(maximum_message_bytes)
+        self.allowed_client_ips = None if allowed_client_ips is None else frozenset(allowed_client_ips)
         socketserver.ThreadingTCPServer.__init__(self, address, _GatewayRequestHandler)
+
+    def client_is_allowed(self, client_ip):
+        return self.allowed_client_ips is None or client_ip in self.allowed_client_ips
 
 
 class GatewayTcpServer(object):
-    def __init__(self, bind_address, port, dispatcher, maximum_message_bytes=8192):
+    def __init__(self, bind_address, port, dispatcher, maximum_message_bytes=8192,
+                 allowed_client_ips=None):
         self._server = _ThreadedGatewayServer(
-            (bind_address, int(port)), dispatcher, maximum_message_bytes)
+            (bind_address, int(port)), dispatcher, maximum_message_bytes, allowed_client_ips)
         self._thread = None
 
     @property

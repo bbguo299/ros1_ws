@@ -3,6 +3,22 @@
 本文件记录已完成的实现、接口核对、验证结果和限制；
 `DUAL_ARM_LIFT_PLAN.md` 仅保留方案与部署设计。
 
+## 2026-08-06：ROS2 宿主机到 ROS1 虚拟机只读联调支持
+
+- **完成内容**：为 ROS2 `rm65_health_client` 补齐 `colcon test` 测试发现、参数模板安装和 launch 入口；将默认端口统一为 `28400`。ROS1 网关新增仅允许 `read_only` 模式使用的来源 IP 白名单监听，新增显式私有覆盖配置与启动文件，并拒绝远程使用示例 token、空白来源白名单、通配或回环绑定地址。
+- **修改文件或模块**：ROS2 的 `setup.py`、`package.xml`、`node.py`、参数模板和 launch；ROS1 的 `protocol.py`、`node.py`、只读配置、协议测试、白名单配置模板与 launch；新增 `docs/ROS2_ROS1_VM_HEALTH_VALIDATION_ZH.md`，并更新项目上下文与总体方案。
+- **原因与效果**：当前 ROS2 宿主机 `172.16.108.1` 与 ROS1 虚拟机 `172.16.108.128` 通过 VMware 专用网段连接。网关可仅监听虚拟机地址并仅接受宿主机来源，而默认只读启动继续保持 `127.0.0.1`。ROS2 仍只构造 `HEALTH`，远程网关仍永久禁止执行命令，因此该联调不会控制 RM65、夹爪或其他硬件。
+- **风险、限制与待办**：虚拟机 UFW 当前不活动，本次未启用或修改防火墙；应用层白名单不是实体机防火墙验收的替代。尚未启动虚拟机网关或 ROS2 节点，未验证 10 分钟现场连通性、真实 token、认证失败、断网重连或 VMware 地址变化。实体机部署必须单独确认同一业务网、固定地址、既有规则和 `chrony`，不得修改 RM65 专用 `ens37`。
+- **验证**：ROS1 `protocol.py`、`node.py` 和协议测试的 Python 编译、两份 YAML 与两份 launch XML 解析通过；受管沙箱缺少 ROS1 Noetic `actionlib`，无法在当前 Ubuntu 22.04 主机运行 `test_read_only.py`。在允许本地回环 Socket 的环境运行 `python3 test/test_protocol.py`，5 项通过。ROS2 `colcon build --packages-select dual_arm_lift_coordinator` 成功；`colcon test --packages-select dual_arm_lift_coordinator` 发现并通过 5 项测试。未启动网络服务或任何真实硬件。
+
+## 2026-08-06：ROS2 最小只读 HEALTH 客户端完成
+
+- **完成内容**：在 `ros2_ws/src/dual_arm_lift_coordinator` 新增 ROS2 Humble `ament_python` 包。`rm65_health_client` 周期性向 RM65 网关发出唯一的 `HEALTH` TCP 请求，并发布完整健康 JSON、连接状态、最近成功时间和最近错误；客户端使用每次请求独立的短连接，下一周期可自动重连。
+- **修改文件或模块**：`dual_arm_lift_coordinator/client.py`、`node.py`、`setup.py`、`setup.cfg`、`package.xml`、`params/local.example.yaml` 及 `test/test_client.py`。
+- **原因与效果**：将 ROS2 主控端与 ROS1 网关保持在任务级 TCP 边界内，先验证双机观测链路，不让 ROS2 直接访问 RM65 ROS1 控制接口。客户端仅构造 `HEALTH`，没有 `PREPARE`、`GRIP`、`ARM_LIFT`、`HOLD` 或 `ABORT` 的调用 API，因此不会触发 RM65 运动或夹爪。
+- **风险、限制与待办**：当前默认参数仍是回环地址、示例 token 和端口，尚未在两台主机之间构建或联调；未验证真实认证、心跳、断网重连、重复请求和 `chrony` 偏差。该节点不是完整协调器，尚未接入 ECO65 状态、视觉、夹持反馈、力控或任务状态机；这些内容必须在双机只读验收和相关安全条件完成后分阶段实施。
+- **验证**：在当前 Ubuntu 22.04 / ROS2 Humble 环境运行 `source /opt/ros/humble/setup.bash && colcon build --packages-select dual_arm_lift_coordinator` 成功。随后 `colcon test --packages-select dual_arm_lift_coordinator` 与 `colcon test-result --verbose` 成功退出但报告 `0 tests`，表明 `test/test_client.py` 尚未接入标准测试发现流程，不能视为单元测试已通过；后续需先补齐测试注册。未启动网络服务或任何真实硬件。
+
 ## 2026-08-06：ROS1/ROS2 单仓库协作结构
 
 - **完成内容**：将 Git 协作根目录调整为包含 `ros1_ws`、`ros2_ws`、`shared` 和 `docs` 的单仓库结构；原 RM65 网关源码移动到 `ros1_ws/src`，并保留已发布提交的 Git 历史。新增 ROS2 与共享目录的职责说明。

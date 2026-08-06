@@ -1,6 +1,7 @@
 # 只读模式允许订阅真实状态，但永久禁止网关发布机械臂和夹爪命令。
 mode: read_only
 real_hardware_enabled: false
+execution_enabled: false
 bind_address: 127.0.0.1
 tcp_port: 28400
 auth_token: simulator-token

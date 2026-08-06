@@ -20,13 +20,14 @@ from rm65_lift_gateway.state_machine import GatewayStateMachine
 TOKEN = "test-token"
 
 
-def make_server():
+def make_server(allowed_client_ips=None):
     profiles = {
         "demo": {"prepare_duration_s": 0.0, "lift_duration_s": 0.25, "vision_ok": True, "grip_ok": True},
     }
     adapters = {"robot": SimRobotAdapter(), "vision": SimVisionAdapter(), "gripper": SimGripperAdapter()}
     machine = GatewayStateMachine(profiles, adapters, past_start_tolerance_s=0.02, max_start_delay_s=1.0)
-    server = GatewayTcpServer("127.0.0.1", 0, GatewayDispatcher(machine, TOKEN), 2048)
+    server = GatewayTcpServer(
+        "127.0.0.1", 0, GatewayDispatcher(machine, TOKEN), 2048, allowed_client_ips)
     server.start()
     return server
 
@@ -78,6 +79,19 @@ class GatewayProtocolTest(unittest.TestCase):
         denied = request(command("health-2", "HEALTH", token="wrong"), self.server)
         self.assertFalse(denied["accepted"])
         self.assertEqual("AUTH_FAILED", denied["code"])
+
+    def test_source_address_allowlist_accepts_listed_client(self):
+        self.server.stop()
+        self.server = make_server(allowed_client_ips=["127.0.0.1"])
+        response = request(command("allowed-health", "HEALTH"), self.server)
+        self.assertTrue(response["accepted"])
+
+    def test_source_address_allowlist_rejects_unlisted_client(self):
+        self.server.stop()
+        self.server = make_server(allowed_client_ips=["192.0.2.1"])
+        response = request(command("blocked-health", "HEALTH"), self.server)
+        self.assertFalse(response["accepted"])
+        self.assertEqual("CLIENT_IP_NOT_ALLOWED", response["code"])
 
     def test_socket_happy_path_does_not_start_before_scheduled_time(self):
         self.assertTrue(request(command("p-1", "PREPARE", payload={"profile": "demo"}), self.server)["accepted"])

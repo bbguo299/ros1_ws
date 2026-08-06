@@ -1,0 +1,9 @@
+<launch>
+  <!-- 先加载固定的只读健康检查，再加载未跟踪的网络和凭据覆盖文件。 -->
+  <arg name="config_file" />
+  <node pkg="rm65_lift_gateway" type="rm65_lift_gateway_node.py"
+        name="rm65_lift_gateway" output="screen">
+    <rosparam command="load" file="$(find rm65_lift_gateway)/config/read_only.yaml" />
+    <rosparam command="load" file="$(arg config_file)" />
+  </node>
+</launch>
