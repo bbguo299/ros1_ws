@@ -1,0 +1,45 @@
+# ROS workspace artifacts
+/.catkin_workspace
+/build/
+/devel/
+/install/
+/log/
+/ros1_ws/.catkin_workspace
+/ros1_ws/build/
+/ros1_ws/devel/
+/ros1_ws/install/
+/ros1_ws/log/
+/ros2_ws/build/
+/ros2_ws/install/
+/ros2_ws/log/
+
+# Migration backup kept outside the tracked monorepo tree.
+/ros1_ws_pre_monorepo_backup_20260806/
+/.git_rewritten_migration_backup_20260806/
+
+# ROS runtime and recorded data
+*.bag
+*.active
+*.log
+
+# Python bytecode and local environments
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+env/
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+
+# Editor and operating system files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

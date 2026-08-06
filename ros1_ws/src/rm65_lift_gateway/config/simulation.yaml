@@ -1,0 +1,28 @@
+# 第一阶段仅允许模拟模式；节点检测到 true 会直接拒绝启动。
+real_hardware_enabled: false
+bind_address: 127.0.0.1
+tcp_port: 28400
+auth_token: simulator-token
+maximum_message_bytes: 8192
+max_seen_request_ids: 1024
+status_publish_rate_hz: 5.0
+past_start_tolerance_s: 0.10
+max_start_delay_s: 30.0
+
+# 所有动作仅由 SimRobotAdapter 的计时器模拟，不会发布任何真实硬件命令。
+profiles:
+  demo:
+    prepare_duration_s: 0.05
+    lift_duration_s: 0.20
+    vision_ok: true
+    grip_ok: true
+  vision_rejected:
+    prepare_duration_s: 0.05
+    lift_duration_s: 0.20
+    vision_ok: false
+    grip_ok: true
+  grip_rejected:
+    prepare_duration_s: 0.05
+    lift_duration_s: 0.20
+    vision_ok: true
+    grip_ok: false

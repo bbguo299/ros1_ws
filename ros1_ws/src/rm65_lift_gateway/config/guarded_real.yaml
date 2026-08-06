@@ -1,0 +1,30 @@
+# 真实执行适配器骨架：仅校验未来档案并观测现场状态，永久禁止控制命令。
+mode: guarded_real
+real_hardware_enabled: false
+execution_enabled: false
+bind_address: 127.0.0.1
+tcp_port: 28400
+auth_token: simulator-token
+maximum_message_bytes: 8192
+max_seen_request_ids: 1024
+status_publish_rate_hz: 5.0
+
+# 未来仅允许经验证的档案；空档案必须保持不可执行。
+profiles: {}
+
+# RM65-B ROS1 驱动健康检查。
+required_joint_names: [joint1, joint2, joint3, joint4, joint5, joint6]
+joint_state_fresh_timeout_s: 0.75
+action_server_wait_s: 3.0
+joint_states_topic: /joint_states
+trajectory_action: /rm_65/follow_joint_trajectory
+arm_error_topic: /rm_driver/ArmError
+sys_error_topic: /rm_driver/SysError
+
+# Gemini 仅检查数据流新鲜度，不运行 ArUco 或任何运动服务。
+camera_fresh_timeout_s: 2.0
+color_image_topic: /camera/color/image_raw
+depth_image_topic: /camera/depth/image_raw
+color_info_topic: /camera/color/camera_info
+depth_info_topic: /camera/depth/camera_info
+observability_window_s: 600.0

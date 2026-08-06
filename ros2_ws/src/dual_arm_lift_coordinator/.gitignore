@@ -1,0 +1,4 @@
+params/local.yaml
+__pycache__/
+*.py[cod]
+*.egg-info/

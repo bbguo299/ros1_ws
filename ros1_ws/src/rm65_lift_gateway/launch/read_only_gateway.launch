@@ -1,0 +1,7 @@
+<launch>
+  <!-- 仅订阅既有驱动/相机节点；本 launch 不启动任何硬件驱动。 -->
+  <node pkg="rm65_lift_gateway" type="rm65_lift_gateway_node.py"
+        name="rm65_lift_gateway" output="screen">
+    <rosparam command="load" file="$(find rm65_lift_gateway)/config/read_only.yaml" />
+  </node>
+</launch>

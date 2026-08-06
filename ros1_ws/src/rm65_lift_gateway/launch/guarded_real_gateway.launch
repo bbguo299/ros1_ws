@@ -1,0 +1,7 @@
+<launch>
+  <!-- 仅校验未来执行档案并订阅现有状态；本 launch 永不发送控制命令。 -->
+  <node pkg="rm65_lift_gateway" type="rm65_lift_gateway_node.py"
+        name="rm65_lift_gateway" output="screen">
+    <rosparam command="load" file="$(find rm65_lift_gateway)/config/guarded_real.yaml" />
+  </node>
+</launch>

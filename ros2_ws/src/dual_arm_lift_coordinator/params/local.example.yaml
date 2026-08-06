@@ -1,0 +1,7 @@
+rm65_health_client:
+  ros__parameters:
+    rm65_host: 127.0.0.1
+    tcp_port: 5000
+    auth_token: CHANGE_ME
+    connect_timeout_s: 2.0
+    health_period_s: 5.0

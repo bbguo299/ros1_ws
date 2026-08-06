@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rm65_lift_gateway</name>
+  <version>0.1.0</version>
+  <description>Simulation, read-only, and guarded-real ROS1 gateway for the RM65 side of dual-arm lifting.</description>
+
+  <maintainer email="maintainer@example.invalid">dual_arm_lift</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>actionlib</exec_depend>
+  <exec_depend>control_msgs</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+
+  <test_depend>python3-nose</test_depend>
+</package>
